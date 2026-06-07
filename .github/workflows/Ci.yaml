@@ -87,7 +87,7 @@ jobs:
           ctest --test-dir build \
                 --build-config Release \
                 --output-on-failure \
-                --output-junit test-results.xml \
+                --output-junit "${{ github.workspace }}/test-results.xml" \
           && echo "outcome=passed" >> $GITHUB_OUTPUT \
           || echo "outcome=failed" >> $GITHUB_OUTPUT
 
@@ -96,6 +96,7 @@ jobs:
         shell: bash
         run: |
           OUTCOME="${{ steps.run_tests.outputs.outcome }}"
+          XML="${{ github.workspace }}/test-results.xml"
 
           if [ "$OUTCOME" = "passed" ]; then
             BADGE="(⁠✿⁠^⁠‿⁠^⁠) Passed"
@@ -106,14 +107,19 @@ jobs:
           echo "## $BADGE ${{ matrix.name }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          if [ ! -f test-results.xml ]; then
+          if [ ! -f "$XML" ]; then
             echo "_No test results found — build may have failed._" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Debug:** workspace contents:" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            ls "${{ github.workspace }}" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
             exit 0
           fi
 
-          TOTAL=$(grep -o 'tests="[0-9]*"' test-results.xml | head -1 | grep -o '[0-9]*' || echo 0)
-          FAILED=$(grep -o 'failures="[0-9]*"' test-results.xml | head -1 | grep -o '[0-9]*' || echo 0)
-          ERRORS=$(grep -o 'errors="[0-9]*"' test-results.xml | head -1 | grep -o '[0-9]*' || echo 0)
+          TOTAL=$(grep -o 'tests="[0-9]*"' "$XML" | head -1 | grep -o '[0-9]*' || echo 0)
+          FAILED=$(grep -o 'failures="[0-9]*"' "$XML" | head -1 | grep -o '[0-9]*' || echo 0)
+          ERRORS=$(grep -o 'errors="[0-9]*"' "$XML" | head -1 | grep -o '[0-9]*' || echo 0)
           PASSED=$(( TOTAL - FAILED - ERRORS ))
 
           echo "| Result  |  Count  |" >> $GITHUB_STEP_SUMMARY
@@ -127,7 +133,7 @@ jobs:
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "### Failed tests" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
-            grep -A5 'failure\|error' test-results.xml \
+            grep -A5 'failure\|error' "$XML" \
               | sed 's/<[^>]*>//g' \
               | sed '/^$/d' \
               >> $GITHUB_STEP_SUMMARY || true
@@ -139,5 +145,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-results-${{ matrix.os }}-${{ matrix.cxx || 'msvc' }}
-          path: test-results.xml
-          if-no-files-found: ignore
+          path: ${{ github.workspace }}/test-results.xml
+          if-no-files-found: warn
