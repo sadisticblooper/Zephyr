@@ -1,6 +1,6 @@
 # Discord
 
-- My Server server for those who want to discuss the development of this library and offet suggestions.
+- My Server server for those who want to discuss the development of this library and offer suggestions.
 - https://discord.gg/8j7AsuEEmG
 
 # Zephyr
