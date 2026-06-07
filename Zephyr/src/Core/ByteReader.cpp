@@ -22,8 +22,8 @@ namespace zephyr::core
 		}
 
 		uint32_t v;
-		std::memcpy(&v, data_ + pos_, 8);
-		pos_ += 8;
+		std::memcpy(&v, data_ + pos_, 4);
+		pos_ += 4;
 		return v;
 	}
 
